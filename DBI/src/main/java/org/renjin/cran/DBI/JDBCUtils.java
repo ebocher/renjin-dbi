@@ -25,62 +25,91 @@ public class JDBCUtils {
       return false;
     }
   }
-
-  public static StringVector getTables(Connection con) {
-    try {
-      StringVector.Builder sb = new StringVector.Builder();
-      DatabaseMetaData dbm = con.getMetaData();
-      String[] types = { "TABLE" };
-      ResultSet rsm = dbm.getTables(con.getCatalog(), null, null, types);
-
-      while (rsm.next()) {
-        sb.add(rsm.getString("TABLE_NAME"));
-      }
-      rsm.close();
-      return sb.build();
-    } catch (SQLException e) {
-      throw new EvalException(e);
+  
+    /**
+     * List the tables stored in the database
+     *
+     * @param con
+     * @return
+     */
+    public static StringVector getTables(Connection con) {
+        return getTables(con, new String[]{"TABLE"});
     }
-  }
 
-  public static StringVector getColumns(Connection con, String table) {
-    try {
-      StringVector.Builder sb = new StringVector.Builder();
-      DatabaseMetaData dbm = con.getMetaData();
-      ResultSet rsm = dbm.getColumns(con.getCatalog(), null, table, null);
-      while (rsm.next()) {
-        sb.add(rsm.getString("COLUMN_NAME"));
-      }
-      rsm.close();
-      // try again with an uppercased table name. Hello, Oracle!
-      if (sb.length() < 1) {
-        rsm = dbm.getColumns(con.getCatalog(), null, table.toUpperCase(), null);
-        while (rsm.next()) {
-          sb.add(rsm.getString("COLUMN_NAME"));
+    /**
+     * List a predefined set of table types in the database
+     *
+     * @param con
+     * @param tableTypes
+     * @return
+     */
+    public static StringVector getTables(Connection con, String[] tableTypes) {
+        try {
+            StringVector.Builder sb = new StringVector.Builder();
+            DatabaseMetaData dbm = con.getMetaData();
+            ResultSet rsm = dbm.getTables(con.getCatalog(), null, null, tableTypes);
+
+            while (rsm.next()) {
+                sb.add(rsm.getString("TABLE_NAME"));
+            }
+            rsm.close();
+            return sb.build();
+        } catch (SQLException e) {
+            throw new EvalException(e);
         }
-        rsm.close();
-      }
-      return sb.build();
-    } catch (SQLException e) {
-      throw new EvalException(e);
     }
-  }
 
-  public static ListVector columnInfo(ResultSet rs) {
-    try {
-      ListVector.Builder tv = new ListVector.Builder();
-      ResultSetMetaData rsm = rs.getMetaData();
-      for (int i = 1; i < rsm.getColumnCount() + 1; i++) {
-        ListVector.NamedBuilder cv = new ListVector.NamedBuilder();
-        cv.add("name", rsm.getColumnName(i));
-        cv.add("type", rsm.getColumnTypeName(i));
-        tv.add(cv.build());
-      }
-      return tv.build();
-    } catch (SQLException e) {
-      throw new EvalException(e);
+    /**
+     * List the name of the columns for a table
+     *
+     * @param con
+     * @param table
+     * @return
+     */
+    public static StringVector getColumns(Connection con, String table) {
+        try {
+            StringVector.Builder sb = new StringVector.Builder();
+            DatabaseMetaData dbm = con.getMetaData();
+            ResultSet rsm = dbm.getColumns(con.getCatalog(), null, table, null);
+            while (rsm.next()) {
+                sb.add(rsm.getString("COLUMN_NAME"));
+            }
+            rsm.close();
+            // try again with an uppercased table name. Hello, Oracle!
+            if (sb.length() < 1) {
+                rsm = dbm.getColumns(con.getCatalog(), null, table.toUpperCase(), null);
+                while (rsm.next()) {
+                    sb.add(rsm.getString("COLUMN_NAME"));
+                }
+                rsm.close();
+            }
+            return sb.build();
+        } catch (SQLException e) {
+            throw new EvalException(e);
+        }
     }
-  }
+
+    /**
+     * Returns the name and the SQL data type for each column of a table
+     *
+     * @param rs
+     * @return
+     */
+    public static ListVector columnInfo(ResultSet rs) {
+        try {
+            ListVector.Builder tv = new ListVector.Builder();
+            ResultSetMetaData rsm = rs.getMetaData();
+            for (int i = 1; i < rsm.getColumnCount() + 1; i++) {
+                ListVector.NamedBuilder cv = new ListVector.NamedBuilder();
+                cv.add("name", rsm.getColumnName(i));
+                cv.add("type", rsm.getColumnTypeName(i));
+                tv.add(cv.build());
+            }
+            return tv.build();
+        } catch (SQLException e) {
+            throw new EvalException(e);
+        }
+    }
 
   /*
    * this is required because Renjn's property accessor fails on the Oracle JDBC
