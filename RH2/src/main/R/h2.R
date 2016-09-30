@@ -7,5 +7,5 @@ RH2 <- H2 <- function() {
 
 
 dbListTables.JDBCConnection <- function(con) {
-	JDBCUtils$getTables(con$conn)	
+	JDBCUtils$getTables(con$conn, c("TABLE", "VIEW", "TABLE LINK"))	
 }
