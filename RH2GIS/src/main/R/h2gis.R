@@ -17,6 +17,14 @@ loadSpatialFunctions <- function(con){
         return ("The connection is not valid. Cannot load H2GIS functions")
 }
 
+dbListTables      <- function(con, ...)       UseMethod("dbListTables") 
+dbExistsTable     <- function(con, name, ...) UseMethod("dbExistsTable")
+
 dbListTables.JDBCConnection <- function(con) {
 	JDBCUtils$getTables(con$conn, c("TABLE", "VIEW", "TABLE LINK", "EXTERNAL"))	
+}
+
+dbExistsTable.JDBCConnection <- function(con, name, ...) {
+	tolower(gsub("(^\"|\"$)","",as.character(name))) %in% 
+			tolower(dbListTables(con))
 }
